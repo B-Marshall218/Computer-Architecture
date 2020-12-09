@@ -475,7 +475,7 @@ A4 0a 0b
 
 *This is an instruction handled by the ALU.*
 
-`MUL registerA registerB`
+` registerA registerB`
 
 Multiply the values in two registers together and store the result in registerA.
 
