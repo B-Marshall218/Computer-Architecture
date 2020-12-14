@@ -9,7 +9,11 @@ MUL = 0b10100010
 PUSH = 0b01000101
 POP = 0b01000110
 CALL = 0b01010000
-RET = 0B00010001
+RET = 0b00010001
+CMP = 0b10100111
+JMP = 0b01010100
+JEQ = 0b01010101
+JNE = 0b01010110
 
 
 class CPU:
@@ -29,6 +33,7 @@ class CPU:
         self.halted = False
         self.stack_pointer = 7
         self.PRINT_SUB_INSTRUCTION = 11
+        self.fl = 0b00000000
         # self.reg[self.stack_pointer] = len(self.ram) - 1
         # LDI = 1
         # HLT = 2
@@ -79,6 +84,31 @@ class CPU:
         if op == MUL:
             self.reg[reg_a] = self.reg[reg_a] * self.reg[reg_b]
             self.pc += 3
+
+        if op == "CMP":
+            # `00000LGE`
+            if self.reg[reg_a] == self.reg[reg_b]:
+                self.fl == 0b00000001
+            else:
+                self.fl == 0b00000000
+            if self.reg[reg_a] < self.reg[reg_b]:
+                self.fl == 0b00000100
+            else:
+                self.fl == 0
+            if self.reg[reg_a] > self.reg[reg_b]:
+                self.fl == 0b00000010
+            else:
+                self.fl == 0
+
+            """
+            If they are equal, set the Equal `E` flag to 1, otherwise set it to 0.
+
+* If registerA is less than registerB, set the Less-than `L` flag to 1,
+  otherwise set it to 0.
+
+* If registerA is greater than registerB, set the Greater-than `G` flag
+  to 1, otherwise set it to 0.
+            """
 
     def trace(self):
         """
@@ -159,16 +189,18 @@ class CPU:
         if instruction == CALL:
             # stores the address of the next intruction on top of the stack
             self.reg[self.stack_pointer] -= 1
-            address_of_next_instruction = self.pc + 2
-            self.ram[self.reg[self.stack_pointer]
-                     ] = address_of_next_instruction
+            self.ram[self.reg[self.stack_pointer]] = self.pc + 2
+            # address_of_next_instruction = self.pc + 2
+        # self.ram[self.reg[self.stack_pointer]
+        #          ] = address_of_next_instruction
             # memory[reg][stack pointer] = address of next instruction
             # then it jumps to the address stored in that register
-            reg_to_get_address = operand_a
+        # reg_to_get_address = operand_a
+        # reg_to_get_address = self.ram[self.pc + 1]
             # reg to get address from = memory[pc +1]
-            self.pc = self.reg[reg_to_get_address]
+            self.pc = self.ram[self.reg[self.stack_pointer]]
+            self.reg[self.stack_pointer] += 1
             # pc = reg[reg to get address from]
-            pass
         if instruction == RET:
             # doesnt take in any operands
             # sets the program counter to it
@@ -177,11 +209,24 @@ class CPU:
             # pops the topmost element of the stack
             self.reg[self.stack_pointer] += 1
             # reg[stack pointer register] += 1
-            pass
         if instruction == self.PRINT_SUB_INSTRUCTION:
             print(" Hi, im a subroutine. Thanks for calling me")
             self.pc += 1
-
+        if instruction == JMP:
+            self.pc = self.reg[operand_a]
+        if instruction == JEQ:
+            if self.fl == 0b1:
+                self.pc = self.reg[operand_a]
+            else:
+                self.pc += 2
+        if instruction == JNE:
+            if self.fl == 0b0:
+                self.pc = self.reg[operand_a]
+            else:
+                self.pc += 2
+        if instruction == CMP:
+            self.alu("CMP", operand_a, operand_b)
+            self.pc += 3
         else:
             print("how did we get here")
             pass
